@@ -1,4 +1,4 @@
-package com.example.mall_umkm_app
+package com.kreasikita.mallumkm
 
 import io.flutter.embedding.android.FlutterActivity
 

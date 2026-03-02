@@ -15,7 +15,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.mall_umkm_app"
+    namespace = "com.kreasikita.mallumkm"
     compileSdk = 35
 
     ndkVersion = "27.1.12297006"
@@ -31,11 +31,11 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.mall_umkm_app"
+        applicationId = "com.kreasikita.mallumkm"
         minSdk = 29
         targetSdk = 35
-        versionCode = flutter.versionCode
-        versionName = "1.0.0"
+        versionCode = 3
+        versionName = "1.0.2"
 
         ndk {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86_64")
