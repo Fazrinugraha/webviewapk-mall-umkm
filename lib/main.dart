@@ -78,33 +78,120 @@ class _WebViewPageState extends State<WebViewPage> {
     }, onError: (err) => debugPrint("Deep link error: $err"));
   }
 
+  // void _handleUri(Uri uri) async {
+  //   debugPrint("LOG: _handleUri dipanggil -> $uri");
+
+  //   if (uri.scheme == "mallumkm" && uri.host == "login") {
+  //     final token = uri.queryParameters['token'];
+  //     debugPrint("LOG: Token -> $token");
+
+  //     if (token == null) return;
+
+  //     // Tunggu controller siap (kalau app baru dibuka dari mati)
+  //     int retry = 0;
+  //     while (_controller == null && retry < 20) {
+  //       await Future.delayed(const Duration(milliseconds: 300));
+  //       retry++;
+  //       debugPrint("LOG: Menunggu controller... retry $retry");
+  //     }
+
+  //     if (_controller != null) {
+  //       debugPrint("LOG: Load login-from-app");
+  //       await _controller!.loadUrl(
+  //         urlRequest: URLRequest(
+  //           url: WebUri("$baseUrl/login-from-app?token=$token"),
+  //         ),
+  //       );
+  //     } else {
+  //       debugPrint("LOG: Controller masih null setelah retry!");
+  //     }
+  //   }
+  // }
+  // void _handleUri(Uri uri) async {
+  //   debugPrint("LOG: _handleUri dipanggil -> $uri");
+
+  //   String? targetUrl;
+
+  //   // Skema custom: mallumkm://login?token=xxx
+  //   if (uri.scheme == "mallumkm" && uri.host == "login") {
+  //     final token = uri.queryParameters['token'];
+  //     if (token == null) return;
+  //     targetUrl = "$baseUrl/login-from-app?token=$token";
+  //   }
+  //   // App Links HTTPS — buka halaman langsung di app
+  //   else if (uri.scheme == "https" &&
+  //       uri.host == "mall-umkm.arunikacyber.my.id") {
+  //     targetUrl = uri.toString();
+  //   }
+
+  //   if (targetUrl == null) return;
+
+  //   // Tunggu controller siap
+  //   int retry = 0;
+  //   while (_controller == null && retry < 20) {
+  //     await Future.delayed(const Duration(milliseconds: 300));
+  //     retry++;
+  //     debugPrint("LOG: Menunggu controller... retry $retry");
+  //   }
+
+  //   if (_controller != null) {
+  //     await _controller!.loadUrl(
+  //       urlRequest: URLRequest(url: WebUri(targetUrl)),
+  //     );
+  //   } else {
+  //     debugPrint("LOG: Controller masih null setelah retry!");
+  //   }
+  // }
   void _handleUri(Uri uri) async {
     debugPrint("LOG: _handleUri dipanggil -> $uri");
 
+    String? targetUrl;
+
+    // Skema custom: mallumkm://login?token=xxx
     if (uri.scheme == "mallumkm" && uri.host == "login") {
       final token = uri.queryParameters['token'];
-      debugPrint("LOG: Token -> $token");
-
       if (token == null) return;
+      targetUrl = "$baseUrl/login-from-app?token=$token";
+    }
+    // App Links HTTPS
+    else if (uri.scheme == "https" &&
+        uri.host == "mall-umkm.arunikacyber.my.id") {
+      final path = uri.path;
 
-      // Tunggu controller siap (kalau app baru dibuka dari mati)
-      int retry = 0;
-      while (_controller == null && retry < 20) {
-        await Future.delayed(const Duration(milliseconds: 300));
-        retry++;
-        debugPrint("LOG: Menunggu controller... retry $retry");
+      // ⛔ Jangan intercept path ini — biarkan browser/sistem handle
+      // final blockedPaths = [
+      //   '/auth/google',
+      //   '/login-from-app',
+      //   '/auth/google/callback',
+      //   '/auth/google/redirect',
+      // ];
+      final blockedPaths = ['/login-from-app', '/auth/google/redirect'];
+
+      final isBlocked = blockedPaths.any((p) => path.startsWith(p));
+      if (isBlocked) {
+        debugPrint("LOG: Skip intercept path -> $path");
+        return; // ← JANGAN load di WebView, biarkan flow normal
       }
 
-      if (_controller != null) {
-        debugPrint("LOG: Load login-from-app");
-        await _controller!.loadUrl(
-          urlRequest: URLRequest(
-            url: WebUri("$baseUrl/login-from-app?token=$token"),
-          ),
-        );
-      } else {
-        debugPrint("LOG: Controller masih null setelah retry!");
-      }
+      targetUrl = uri.toString();
+    }
+
+    if (targetUrl == null) return;
+
+    // Tunggu controller siap
+    int retry = 0;
+    while (_controller == null && retry < 20) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      retry++;
+      debugPrint("LOG: Menunggu controller... retry $retry");
+    }
+
+    if (_controller != null) {
+      await _controller!.loadUrl(
+        urlRequest: URLRequest(url: WebUri(targetUrl)),
+      );
+    } else {
+      debugPrint("LOG: Controller masih null setelah retry!");
     }
   }
 
